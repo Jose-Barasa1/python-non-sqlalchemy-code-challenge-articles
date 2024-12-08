@@ -1,4 +1,5 @@
 class Article:
+    all=[]
     def __init__(self, author, magazine, title):
         if not isinstance(author, Author):
             raise ValueError("Author must be an instance of Author.")
@@ -10,10 +11,13 @@ class Article:
         self._author = author
         self._magazine = magazine
         self._title = title
+        # Adds the article to the 'all' class variable
+        Article.all.append(self)
         
+        # Adds the current article (self) to the list of articles associated with the author
         author._articles.append(self)
         magazine._articles.append(self)
-
+       # allows you to access the title of the current article
     @property
     def title(self):
         return self._title
@@ -21,31 +25,24 @@ class Article:
     @property
     def author(self):
         return self._author
-    
+
     @author.setter
     def author(self, new_author):
+        # Ensure the new author is an instance of Author
         if not isinstance(new_author, Author):
-            raise ValueError("New author must be an instance of Author.")
-        # Remove article from old author's list if exists
-        if self._author:
-            self._author._articles.remove(self)
+            raise ValueError("Author must be an instance of Author.")
         self._author = new_author
-        new_author._articles.append(self)
 
     @property
     def magazine(self):
         return self._magazine
-    
+
     @magazine.setter
     def magazine(self, new_magazine):
+        # Ensure the new magazine is an instance of Magazine
         if not isinstance(new_magazine, Magazine):
-            raise ValueError("New magazine must be an instance of Magazine.")
-        # Remove article from old magazine's list if exists
-        if self._magazine:
-            self._magazine._articles.remove(self)
+            raise ValueError("Magazine must be an instance of Magazine.")
         self._magazine = new_magazine
-        new_magazine._articles.append(self)
-
 
 class Author:
     def __init__(self, name):
@@ -53,7 +50,7 @@ class Author:
             raise ValueError("Name must be a non-empty string.")
         self._name = name
         self._articles = []
-
+    # allows you to access the author's name
     @property
     def name(self):
         return self._name
@@ -68,7 +65,10 @@ class Author:
         return Article(self, magazine, title)
 
     def topic_areas(self):
-        return list(set(magazine.category for magazine in self.magazines()))
+    # If no articles, return None
+      if not self._articles:
+        return None
+      return list(set(magazine.category for magazine in self.magazines()))
 
 
 class Magazine:
@@ -77,7 +77,7 @@ class Magazine:
             raise ValueError("Name must be a string between 2 and 16 characters.")
         if not isinstance(category, str) or len(category) == 0:
             raise ValueError("Category must be a non-empty string.")
-        
+        # Stores the magazine's name and category, and initializes an empty list for articles.
         self._name = name
         self._category = category
         self._articles = []
@@ -109,8 +109,24 @@ class Magazine:
         return list(set(article.author for article in self._articles))
 
     def article_titles(self):
+        # If no articles, return None
+        if not self._articles:
+            return None
         return [article.title for article in self._articles]
 
     def contributing_authors(self):
-        return list(set(article.author for article in self._articles))
-mag1=Magazine(name="me",category="G")
+        # Create a dictionary to count the number of articles per author
+        author_article_count = {}
+        for article in self._articles:
+            author = article.author
+            author_article_count[author] = author_article_count.get(author, 0) + 1
+        
+        # Filter authors who have written more than 2 articles
+        authors_with_more_than_two = [
+            author for author, count in author_article_count.items() if count > 2
+        ]
+        # If no authors with more than 2 articles, return None
+        if not authors_with_more_than_two:
+            return None
+        return authors_with_more_than_two
+
